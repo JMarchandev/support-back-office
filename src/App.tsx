@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { getCompanyById, updateCompany } from "./controllers/companyController";
 import { Company } from "./types/company";
-import { Field, Form, Formik } from "formik";
+import { Form, Formik } from "formik";
+import { Form as BForm, Button, Container } from "react-bootstrap";
 
 function App() {
   const [companyData, setCompanyData] = useState<Company | null>(null);
@@ -18,7 +19,10 @@ function App() {
     fetchCompany();
   }, []);
 
-  const handleSubmitUpdate = (data: { prompt_spec: string }) => {
+  const handleSubmitUpdate = (
+    data: { prompt_spec: string },
+    resetHandler: any
+  ) => {
     if (!companyData) return;
 
     const dataToUpdate = {
@@ -26,7 +30,10 @@ function App() {
     };
 
     updateCompany(companyData._id, dataToUpdate)
-      .then((res) => setCompanyData(res.data))
+      .then((res) => {
+        setCompanyData(res.data);
+        resetHandler();
+      })
       .catch(console.log);
   };
 
@@ -34,7 +41,9 @@ function App() {
     if (!companyData) return;
 
     const dataToUpdate = {
-      prompt_spec: [...companyData.prompt_spec.filter(specList => specList !== spec)],
+      prompt_spec: [
+        ...companyData.prompt_spec.filter((specList) => specList !== spec),
+      ],
     };
 
     updateCompany(companyData._id, dataToUpdate)
@@ -44,33 +53,49 @@ function App() {
 
   return (
     <div className="App">
-      {companyData && (
-        <>
-          <h1>{companyData.name}</h1>
-          {companyData.prompt_spec.map((spec, i) => (
-            <p>
-              <button onClick={() => handleDeletePrompt(spec)}>x</button>
-              {"   "}
-              {spec}
-            </p>
-          ))}
-        </>
-      )}
-      <Formik
-        initialValues={{
-          prompt_spec: "",
-        }}
-        onSubmit={(values) => {
-          handleSubmitUpdate(values);
-        }}
-      >
-        <Form>
-          <Field type="text" name="prompt_spec" id="prompt_spec" />
-          <div>
-            <button>Envoyer</button>
-          </div>
-        </Form>
-      </Formik>
+      <Container>
+        {companyData && (
+          <>
+            <h1>{companyData.name}</h1>
+            {companyData.prompt_spec.map((spec, i) => (
+              <p>
+                <button onClick={() => handleDeletePrompt(spec)}>x</button>
+                {"   "}
+                {spec}
+              </p>
+            ))}
+          </>
+        )}
+        <Formik
+          initialValues={{
+            prompt_spec: "",
+          }}
+          onSubmit={(values, { resetForm }) => {
+            handleSubmitUpdate(values, resetForm);
+          }}
+        >
+          {({ handleChange, handleSubmit, values }) => {
+            return (
+              <Form onSubmit={handleSubmit}>
+                <BForm.Group>
+                  <BForm.Control
+                    className="w-100"
+                    id="prompt_spec"
+                    name="prompt_spec"
+                    onChange={handleChange}
+                    value={values.prompt_spec}
+                  >
+                    {/* <Field  /> */}
+                  </BForm.Control>
+                </BForm.Group>
+                <div>
+                  <Button type="submit">Envoyer</Button>
+                </div>
+              </Form>
+            );
+          }}
+        </Formik>
+      </Container>
     </div>
   );
 }
